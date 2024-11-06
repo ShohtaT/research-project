@@ -1,21 +1,21 @@
 # research-project
 
-## 起動方法
+## 初期設定
 
 ```bash
 # 仮想環境がまだ作成されていない場合
 python3 -m venv myenv
 
-# 仮想環境の有効化
-source myenv/bin/activate
-
 # djangoのインストール
 pip install django
 ```
 
-以下、python3コマンドは仮想環境内で実行する。
+## 起動方法
 
 ```bash
+# 仮想環境の有効化
+source myenv/bin/activate
+
 # 起動する
 python3 manage.py runserver
 
