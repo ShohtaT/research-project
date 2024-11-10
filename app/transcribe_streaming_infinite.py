@@ -1,11 +1,12 @@
-# `python /Users/takahashishohta/development/research-project/app/transcribe_streaming_infinite.py` で実行可能。
+# INFO: `python3 ./app/transcribe_streaming_infinite.py` で実行可能。
 
 from __future__ import division
-import re
-import sys
 import os
-import pyaudio
+import sys
+from datetime import datetime
 import time
+import csv
+import pyaudio
 from google.cloud import speech
 from six.moves import queue
 
@@ -16,7 +17,9 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "config/credentials.json"
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
 
-LIMIT_TIME = 30  # 30秒間の音声を文字起こし
+# FIXME: 以下の変数を適切な値に変更してください
+LIMIT_TIME = 30  # 総制限時間を秒単位で設定（例: 120秒）
+WRITE_INTERVAL = 10  # 30秒ごとに書き込み
 
 class MicrophoneStream:
     def __init__(self, rate, chunk):
@@ -69,35 +72,48 @@ class MicrophoneStream:
                     break
             yield b"".join(data)
 
+
 def display_transcriptions(responses, start_time):
-    """サーバーからの応答を受け取り、文字起こしを表示"""
-    num_chars_printed = 0
-    for response in responses:
-        # 開始から30秒が経過したら終了
-        if time.time() - start_time > LIMIT_TIME:
-            print(LIMIT_TIME, "秒経過したので終了します。")
-            break
+    """サーバーからの応答を受け取り、文字起こしを表示し、確定した文字起こしをCSVに保存"""
+    last_write_time = start_time  # 最後にCSVに書き込んだ時間
+    last_written_transcript = ""  # 最後にCSVに書き込んだ文字
 
-        if not response.results:
-            continue
+    # 現在の日時を取得し、ファイル名に反映
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"transcription_results/{timestamp}.csv"
 
-        result = response.results[0]
-        if not result.alternatives:
-            continue
+    with open(filename, mode='w', newline='', encoding='utf-8') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow(["Timestamp", "Transcription"])  # ヘッダー行を書き込み
 
-        transcript = result.alternatives[0].transcript
-        overwrite_chars = " " * (num_chars_printed - len(transcript))
+        for response in responses:
+            if not response.results:
+                continue
 
-        if not result.is_final:
-            sys.stdout.write(transcript + overwrite_chars + "\r")
+            result = response.results[0]
+            if not result.alternatives:
+                continue
+
+            transcript = result.alternatives[0].transcript
+            sys.stdout.write(transcript + "\r")
             sys.stdout.flush()
-            num_chars_printed = len(transcript)
-        else:
-            print(transcript + overwrite_chars)
-            if re.search(r"\b(exit|quit)\b", transcript, re.I):
-                print("Exiting..")
+
+            # 差分を取得
+            diff = transcript[len(last_written_transcript):]
+
+            # WRITE_INTERVAL 秒ごとにCSVに書き込み
+            if time.time() - last_write_time >= WRITE_INTERVAL:
+                writer.writerow([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), diff])
+                print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), ": ", diff)
+                last_written_transcript = transcript  # 最後の書き込み内容を更新
+                last_write_time = time.time()  # 最後の書き込み時間を更新
+
+            # 開始から LIMIT_TIME 秒が経過したら終了
+            if time.time() - start_time > LIMIT_TIME:
+                writer.writerow([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), diff])
+                print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), ": ", diff)
+                print(LIMIT_TIME, "秒経過したので終了します。(", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), ")========")
                 break
-            num_chars_printed = 0
 
 def main():
     """音声ストリーミングを設定して実行するメイン関数"""
