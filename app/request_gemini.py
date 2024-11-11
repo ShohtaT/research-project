@@ -1,5 +1,6 @@
-from dotenv import load_dotenv
+# INFO: `python3 ./app/request_gemini.py` で実行可能。
 
+from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file
 
 import google.generativeai as genai
