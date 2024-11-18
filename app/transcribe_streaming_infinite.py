@@ -2,7 +2,6 @@
 
 from __future__ import division
 import os
-import sys
 from datetime import datetime
 import time
 import csv
@@ -18,8 +17,8 @@ RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
 
 # FIXME: 以下の変数を適切な値に変更してください
-# LIMIT_TIME = 30  # 総制限時間を秒単位で設定
-WRITE_INTERVAL = 10  # 15秒ごとに書き込み
+LIMIT_TIME = 180  # 3minで終了
+WRITE_INTERVAL = 10  # 10秒ごとに書き込み
 
 class MicrophoneStream:
     def __init__(self, rate, chunk):
@@ -84,7 +83,7 @@ def display_transcriptions(responses, start_time):
 
     with open(filename, mode='w', newline='', encoding='utf-8') as csv_file:
         writer = csv.writer(csv_file)
-        # writer.writerow(["Timestamp", "Transcription"])  # ヘッダー行を書き込み
+        # writer.writerow(["Transcription"])  # ヘッダー行を書き込み
 
         for response in responses:
             if not response.results:
@@ -108,12 +107,12 @@ def display_transcriptions(responses, start_time):
                 last_written_transcript = transcript  # 最後の書き込み内容を更新
                 last_write_time = time.time()  # 最後の書き込み時間を更新
 
-            # # 開始から LIMIT_TIME 秒が経過したら終了
-            # if time.time() - start_time > LIMIT_TIME:
-            #     writer.writerow([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), diff])
-            #     print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), ": ", diff)
-            #     print(LIMIT_TIME, "秒経過したので終了します。(", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), ")========")
-            #     break
+            # 開始から LIMIT_TIME 秒が経過したら終了
+            if time.time() - start_time > LIMIT_TIME:
+                writer.writerow([diff])
+                print(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), ": ", diff)
+                print(LIMIT_TIME, "秒経過したので終了します。(", datetime.now().strftime("%Y-%m-%d %H:%M:%S"), ")========")
+                break
 
 def main():
     """音声ストリーミングを設定して実行するメイン関数"""
@@ -136,6 +135,3 @@ def main():
                     for content in audio_generator)
         responses = client.streaming_recognize(streaming_config, requests)
         display_transcriptions(responses, start_time)  # 開始時刻を渡す
-
-if __name__ == "__main__":
-    main()
