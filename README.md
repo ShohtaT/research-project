@@ -26,6 +26,9 @@ python3 manage.py runserver
 ```bash
 # main.pyの実行
 python3 ./app/main.py
+
+# 文字起こしのみ
+python3 ./app/transcribe_streaming_infinite.py
 ```
 
 ### 処理内容

@@ -6,6 +6,7 @@ load_dotenv()  # Load environment variables from .env file
 
 import csv
 import os
+import pandas as pd
 import google.generativeai as genai
 
 
@@ -21,7 +22,7 @@ class GeminiRequester:
 
 def main(csv: str):
     """指定されたCSVファイルを解析し、Geminiにプロンプトを送信して応答を取得します。"""
-    # CSVファイルの解析
+    # 1. CSVファイルの解析
     try:
         parsed_data = parse_csv(csv_path=csv)
         print("文字起こししたデータ ================ \n", parsed_data, "\n===========================================")
@@ -32,10 +33,10 @@ def main(csv: str):
         print(f"CSV解析中にエラーが発生しました: {e}")
         return
 
-    # プロンプト生成
+    # 2. ドラマデータセットの読み込みと、プロンプト生成
     prompt_text = generate_prompt(parsed_data)
 
-    # Geminiへリクエスト
+    # 3. Geminiへリクエスト
     print("Requesting Gemini...")
     requester = GeminiRequester()
     try:
@@ -52,7 +53,7 @@ def parse_csv(csv_path: str) -> str:
 
     with open(csv_path, "r", encoding="utf-8") as file:
         reader = csv.DictReader(file)
-        data = [list(row.values())[0] for row in reader] # すべての行のデータを1列目から取得して結合
+        data = [list(row.values())[0] for row in reader]  # すべての行のデータを1列目から取得して結合
 
     result = " ".join(data)
     return result
@@ -63,7 +64,19 @@ def generate_prompt(data: str) -> str:
     if not data:
         return "データが空です。"
 
+    # データセットの読み込み、文字列として保持する
+    df = pd.read_csv(f"drama_dataset/data.csv")
+    dataset = df.to_csv(index=False)
+
     # TODO: プロンプトを考える
-    prompt = f"以下のデータを要約してください:\n {data}\n"
+    prompt = (
+        "これは「BGM名」と「会話テキスト」のアノテーションデータ（A）です。"
+        "これにより、どんな会話にどんなBGMが使用されているのかという特徴が見えてくるはずです。"
+        f"\n {dataset}\n"
+        "これを用いて、以下のことを行なってください。"
+        f"以下のデータは、実際に行われた会話です。これに類似する会話テキストを探索し、Aに対応するBGM名を上位3つ提示してください。"
+        f"\n {data}\n")
+
+    print("プロンプト ================ \n", prompt, "\n===========================================")
 
     return prompt
