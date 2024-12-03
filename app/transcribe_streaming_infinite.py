@@ -17,7 +17,7 @@ RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
 
 # FIXME: 以下の変数を適切な値に変更してください
-LIMIT_TIME = 1000  # 3minで終了
+LIMIT_TIME = 300  # 3minで終了
 WRITE_INTERVAL = 10  # 10秒ごとに書き込み
 
 
