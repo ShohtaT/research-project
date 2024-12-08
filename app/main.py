@@ -8,7 +8,7 @@ import request_gemini as gemini
 
 def main():
     print("Start main function.")
-    # 3分間文字起こしを行い、csv を作成する。
+    # 5分間文字起こしを行い、csv を作成する。
     transcribe.main()
 
     # transcription_resultsディレクトリ内の最新のCSVをファイル名順で取得する
