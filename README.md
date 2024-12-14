@@ -5,9 +5,6 @@
 ```bash
 # 仮想環境がまだ作成されていない場合
 python3 -m venv myenv
-
-# djangoのインストール
-pip install django
 ```
 
 ## 起動方法
@@ -24,10 +21,29 @@ python3 manage.py runserver
 
 @ref https://qiita.com/royal_straight_flush/items/f6b67281117c60c80879
 
-## マイグレーション
+## 処理内容と実行
 
-以下の手順によりテーブルを追加することができる。
+```bash
+# main.pyの実行
+python3 ./app/main.py
 
+# 文字起こしのみ
+python3 ./app/transcribe_streaming_infinite.py
+```
+
+### 処理内容
+1. 文字起こし（3分間）
+   1. CSV ファイルが自動生成される
+2. 生成した最新 CSV を用いて Gemini へリクエスト
+
+[実行例]
+<img src="./images/スクリーンショット%202024-11-18%2015.54.38.png">
+
+<hr>
+
+## その他コマンド
+
+- テーブルの追加
 ```bash
 # 実行例
 
@@ -45,20 +61,18 @@ Running migrations:
   Applying app.0001_initial... OK
 ```
 
-### その他コマンド
-
-マイグレーションの状態を確認する。
+- マイグレーションの状態を確認する。
 ```bash
 python manage.py showmigrations
 ```
 
-マイグレーションを特定の位置までロールバックする。
+- マイグレーションを特定の位置までロールバックする。
 ```bash
 # 0001_initialのマイグレーションまで戻す（0001_initialはup状態）
 python manage.py migrate app 0001_initial
 ```
 
-アプリのマイグレーションをリセットする。
+- アプリのマイグレーションをリセットする。
 ```bash
 python manage.py migrate app zero
 ```
